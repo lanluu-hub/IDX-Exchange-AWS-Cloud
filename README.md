@@ -22,3 +22,22 @@
 - https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html
 - https://aws.amazon.com/compliance/shared-responsibility-model/
 - https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_identity-management.html
+
+---
+
+## Week 2 — IAM & Security Foundations
+
+### Policy Explanation
+
+#### S3UploaderOnly-lanluu
+
+- **What it allow**: upload (PutObject) and download (GetObject) of objects in my-training-bucket-lanluu only. /\* means objects inside the bucket, not the bucket itself. Which mean Listing the bucket, listing all buckets, deleting objects, access to any other bucket, or any other AWS service are not allow.
+
+- **Why it is scoped this way**: I scoped it this way to support Least privilege. If there is a credentials leak, the damage is limited to reading and writing objects in one training bucket.
+
+### Resource:
+
+- https://docs.aws.amazon.com/IAM/latest/UserGuide/id.html
+- https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html
+- https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started-reduce-permissions.html
+- https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
