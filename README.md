@@ -27,6 +27,25 @@
 
 ## Week 2 — IAM & Security Foundations
 
+### Concept
+
+- **IAM Users**: A long‑lived identity in your AWS account, representing a person or application. Permissions is granted directly via policies or through group membership.
+
+- **IAM Groups**: is a container for one or more IAM users, apply the same permissions to multiple users by attaching a policy to the group.
+
+- **IAM Roles**: An AWS IAM role is a temporary login that gives permissions to AWS services, apps, or external users without using long-term passwords or keys. Controlled by rules for who can use it and what they can do, these roles last anywhere from 15 minutes to 12 hours. They keep your cloud environment secure by eliminating permanent credentials for everyday tasks like running EC2 instances, executing Lambda functions, or accessing other accounts.
+
+- **Identity-based policy**: attaches directly to users, groups, or roles, following them around to define what actions they are allowed to perform across AWS.
+
+- **Resource-based policy**: attaches directly to a specific resource (like an S3 bucket), defining who is allowed to access that specific item.
+
+- **Managed Policies**: Reusable templates with standalone ARNs that can be attached to multiple identities.
+  - **AWS Managed**: Created and maintained by AWS (read-only for you).
+
+  - **Customer Managed**: Created by you, fully customizable, and support version control/rollback.
+
+- **Inline Policies**: Written specifically for a single identity (one-to-one relationship). They cannot be shared and are automatically deleted if the parent user or role is deleted.
+
 ### Policy Explanation
 
 #### S3UploaderOnly-lanluu
@@ -41,3 +60,43 @@
 - https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html
 - https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started-reduce-permissions.html
 - https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
+
+---
+
+## Week 3 — Compute: EC2
+
+### Concept
+
+- AMIs: An Amazon Machine Image (AMI) is a special type of virtual appliance used to create a virtual machine within Amazon EC2. It serves as the basic unit of deployment for services delivered using EC2. An AMI provides the necessary information to launch an instance, including the operating system, application server, and applications. It also contains a block device mapping that specifies the volumes to attach to the instance when it’s launched.
+
+- Instance types: T3.micro is designed for general‑purpose workloads with moderate CPU usage, such as:
+  - Web applications and microservices
+
+  - Development and test environments
+
+  - Code repositories
+
+  - Small databases
+
+- Security groups: Managing access and ensuring security for resources in various environments, They act as virtual firewalls, controlling inbound and outbound traffic based on defined rules.
+
+- NACLs: subnet-level security controls in AWS that allow or deny inbound and outbound traffic to manage network access. Unlike security groups, which operate at the instance level, NACLs apply rules to all resources within a subnet, providing an additional layer of security
+
+- EBS volumes: provides persistent block storage for EC2 instances. Volumes behave like virtual hard drives and persist independently of instance lifecycle. They must be in the same Availability Zone as the instance to attach.
+
+- User Data Bootstrapping: the process of passing a script or cloud‑init directives to a new EC2 instance at launch so it can automatically configure itself on first boot. Can be use to:
+  - Install software (e.g., nginx, docker, nodejs)
+
+  - Download and set up application code
+
+  - Configure services, firewall rules, and environment variables
+  - Register the instance with load balancers or monitoring tools
+
+### Resource
+
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/secondary-networks.html
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/storage_ebs.html
+- https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
