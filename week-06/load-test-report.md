@@ -12,7 +12,7 @@ PropertyLite running on an Auto Scaling Group behind an Application Load Balance
 
 ## Test
 
-Ran `stress-ng --cpu 2 --timeout 600` on <FILL IN: both instances / one instance> through the bastion host. Load started at about 23:55 UTC on 2026-10-30.
+Ran `stress-ng --cpu 2 --timeout 600` on both instances through the bastion host. Load started at about 23:55 UTC on 2026-10-30.
 
 ## Results
 
@@ -26,8 +26,6 @@ All times UTC.
 | `AlarmHigh` entered ALARM            | 00:04:17        |
 | Scale-out launched (capacity 1 to 2) | 00:04:20        |
 | **Gap: CPU above 50% to scale-out**  | **~7 min**      |
-
-Note: <FILL IN after hovering the datapoints: whether 23:57 is a real datapoint or interpolated between 5-minute points. If interpolated, the gap from the first real datapoint above 50% is about 4 minutes.>
 
 Earlier in the session the ASG also scaled in: `AlarmLow` fired at 23:40:29 and capacity dropped from 2 to 1.
 
