@@ -101,15 +101,17 @@
 - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/storage_ebs.html
 - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
-# Week 5 — Networking: VPC Deep Dive
+---
 
-## Overview
+## Week 5 — Networking: VPC Deep Dive
+
+### Overview
 
 This lab explores Amazon Virtual Private Cloud (Amazon VPC) networking by building a custom VPC, configuring public and private subnets, and implementing secure access to a private EC2 instance through a bastion host.
 
 The lab also investigates how route tables, an Internet Gateway (IGW), and a Network Address Translation (NAT) Gateway control network traffic within an AWS environment.
 
-## Architecture
+### Architecture
 
 The environment uses the following configuration:
 
@@ -129,15 +131,15 @@ The VPC uses public subnets for resources that require direct internet connectiv
 
 Refer to [`vpc-diagram.png`](./vpc-diagram.png) for the network architecture.
 
-## Network Components
+### Network Components
 
-### VPC and CIDR Block
+#### VPC and CIDR Block
 
 The VPC uses the IPv4 CIDR block `10.0.0.0/16`, providing a private address range for the lab environment.
 
 The subnet CIDR blocks divide this address space into smaller networks across two Availability Zones. Each subnet must use a non-overlapping CIDR block contained within the VPC range.
 
-### Public Subnets
+#### Public Subnets
 
 Public subnets host resources that need direct internet connectivity, including the bastion host and the NAT Gateway.
 
@@ -148,7 +150,7 @@ Their route tables contain a default route:
 
 A subnet is not public merely because of its name. Its route table must provide a route to the Internet Gateway, and the resource must have the necessary public addressing and security configuration.
 
-### Private Subnets
+#### Private Subnets
 
 Private subnets host instances that should not be directly reachable from the public internet.
 
@@ -156,13 +158,13 @@ Their route tables contain a default route to the NAT Gateway for outbound IPv4 
 
 Private instances can initiate supported outbound connections through the NAT Gateway, but the NAT Gateway does not provide unsolicited inbound internet connectivity.
 
-### Internet Gateway
+#### Internet Gateway
 
 The Internet Gateway connects the VPC to the internet. Public-subnet route tables use it as the target for the default internet route.
 
 Internet connectivity also depends on the resource's public IP addressing, security group rules, network ACLs, and the remote endpoint.
 
-### NAT Gateway
+#### NAT Gateway
 
 The NAT Gateway allows instances in private subnets to initiate outbound IPv4 connections without requiring public IPv4 addresses on those instances.
 
@@ -170,7 +172,7 @@ For this lab, one NAT Gateway is placed in a public subnet and associated with a
 
 Using one NAT Gateway reduces the number of NAT Gateways required for the exercise, but it introduces a single point of failure and can create cross-Availability-Zone traffic costs. NAT Gateways also incur charges, so they must be deleted during cleanup.
 
-### Bastion Host
+#### Bastion Host
 
 The bastion host is an EC2 instance deployed in a public subnet. It provides a controlled SSH entry point into the VPC.
 
@@ -178,7 +180,7 @@ Its security group allows inbound SSH (TCP port 22) only from my current public 
 
 This arrangement avoids exposing the private instance directly to the internet.
 
-## Traffic Flow: Laptop to Private Instance
+### Traffic Flow: Laptop to Private Instance
 
 The SSH connection follows these steps:
 
@@ -190,7 +192,7 @@ The SSH connection follows these steps:
 6. The private instance's security group permits SSH because the traffic originates from the bastion host's security group.
 7. After authentication, I receive a shell on the private instance without exposing it directly to the internet.
 
-### SSH Agent Forwarding
+#### SSH Agent Forwarding
 
 Agent forwarding can be used to authenticate to the private instance without copying the private key onto the bastion host.
 
@@ -209,7 +211,7 @@ ssh ec2-user@<private-instance-private-ip>
 
 Agent forwarding should only be enabled when connecting to a trusted bastion host because a compromised host may be able to use the forwarded agent while the connection is active. The private key itself remains on my laptop.
 
-## Private Instance Internet Access
+### Private Instance Internet Access
 
 The private instance uses the NAT Gateway for outbound internet access.
 
@@ -225,9 +227,9 @@ Return traffic is translated and routed back to the originating instance, provid
 
 The NAT Gateway does not replace the bastion host. The bastion provides administrative SSH access, while the NAT Gateway provides outbound connectivity.
 
-## Troubleshooting
+### Troubleshooting
 
-### Private Instance Cannot Access the Internet
+#### Private Instance Cannot Access the Internet
 
 **Symptom:** Running `sudo yum update -y` hangs or eventually times out.
 
@@ -242,7 +244,7 @@ Check the following:
 
 A common cause is a missing subnet association. Creating a route in a route table does not automatically apply that route to every subnet. Each subnet uses its explicitly associated route table or the VPC's main route table if no explicit association exists.
 
-### SSH to the Private Instance Fails
+#### SSH to the Private Instance Fails
 
 Check that:
 
@@ -252,7 +254,7 @@ Check that:
 - Both instances use compatible SSH usernames, keys, and authentication settings.
 - The private instance's subnet routing and network ACLs permit the connection.
 
-## Security Considerations
+### Security Considerations
 
 - Restrict bastion SSH access to my current public IP address instead of allowing `0.0.0.0/0`.
 - Allow SSH to the private instance only from the bastion host's security group.
@@ -261,7 +263,7 @@ Check that:
 - Avoid assigning public IP addresses to private instances unless there is a specific requirement.
 - Review AWS charges before and after the lab.
 
-## Cleanup
+### Cleanup
 
 To avoid unnecessary charges:
 
@@ -273,7 +275,7 @@ To avoid unnecessary charges:
 
 A NAT Gateway incurs charges while provisioned, even when little or no traffic passes through it. EC2, storage, and public IPv4 resources may also incur charges depending on the account and current AWS pricing.
 
-## Learning Outcomes
+### Learning Outcomes
 
 This lab demonstrates how to:
 
@@ -284,7 +286,7 @@ This lab demonstrates how to:
 - Troubleshoot routing and subnet-association problems.
 - Apply least-privilege security group rules and clean up cloud resources responsibly.
 
-## Evidence and Validation
+### Evidence and Validation
 
 After completing the lab, record the actual resource configuration and add screenshots or other evidence if required.
 
@@ -299,3 +301,71 @@ After completing the lab, record the actual resource configuration and add scree
 [ ] Billable resources removed after the lab.
 
 **Status:** This document describes the intended lab configuration. Update the validation checklist and any configuration details to reflect the resources actually deployed and tested.
+
+---
+
+## Week 6 — Elastic Load Balancing & Auto Scaling
+
+### 1. ALB Target Groups & Health Checks
+
+**Analogy:** The ALB is a restaurant host. A target group is a section of tables with its own waiters (your servers). Health checks are the host glancing over to confirm a waiter is actually on shift before seating anyone.
+
+**Core ideas**
+
+- A listener rule forwards matching requests to a target group, which is a pool of targets (instance, IP, Lambda) on a given protocol and port.
+- The ALB probes each target and only routes to healthy ones.
+- Key health check settings:
+  - **Path:** use a lightweight endpoint like `/health`, not a heavy page
+  - **Interval / timeout:** how often to probe and how long to wait (defaults ~30s / 5s)
+  - **Healthy / unhealthy threshold:** consecutive passes or fails before the state flips (defaults ~5 / 2)
+  - **Success codes:** HTTP codes that count as healthy (default 200)
+- **Deregistration delay** (default 300s) lets in-flight requests finish before a target is removed.
+
+**Gotchas**
+
+- Targets' security group must allow inbound traffic from the ALB's security group, or everything shows unhealthy.
+- If all targets are unhealthy, the ALB fails open and routes to all of them anyway.
+- An ASG only uses ALB health checks if you set its health check type to ELB. Otherwise it only sees EC2 status checks and won't replace an instance whose app is dead.
+
+### 2. Launch Templates
+
+**Analogy:** A recipe card for building identical servers. The ASG is the kitchen that follows the card every time it needs another one.
+
+**Core ideas**
+
+- Stores instance config: AMI, instance type, key pair, security groups, IAM instance profile, user data, EBS volumes, tags.
+- **Versioned and immutable.** Edits create a new version. The ASG points to a specific version, `$Latest`, or `$Default`.
+- Replaces the older launch configurations (legacy, no versioning). Launch templates also support mixed instance types and Spot.
+
+**Gotchas**
+
+- Changing the template doesn't touch running instances. Only new launches use it.
+- To roll a change out, point the ASG at the new version, then run an **instance refresh**.
+- Pinning a specific version is more predictable than `$Latest`.
+
+### 3. Auto Scaling Group Scaling Policies
+
+**Analogy:** A thermostat. You set a target temperature (metric) and the ASG adds or removes heating (instances) to hold it.
+
+**Core ideas**
+
+- Capacity is bounded by **min / desired / max**. Policies change desired within those bounds.
+- Policy types:
+
+| Type                | How it works                                                          | Use when                           |
+| ------------------- | --------------------------------------------------------------------- | ---------------------------------- |
+| **Target tracking** | Hold a metric at a target (e.g., CPU 50%, `ALBRequestCountPerTarget`) | Default choice                     |
+| **Step scaling**    | CloudWatch alarm triggers different adjustments by breach size        | Need finer control                 |
+| **Simple scaling**  | One alarm, one adjustment, then cooldown                              | Legacy, avoid                      |
+| **Scheduled**       | Change capacity at set times                                          | Predictable load                   |
+| **Predictive**      | Forecasts from history                                                | Recurring daily or weekly patterns |
+
+**Gotchas**
+
+- Target tracking scales out aggressively and scales in conservatively, on purpose.
+- **Instance warmup** keeps a new instance's metrics out of the calculation until it's ready, which prevents over-scaling.
+- `ALBRequestCountPerTarget` usually reflects web load better than CPU.
+
+## How They Fit Together
+
+Launch template defines _what_ to launch. Scaling policy decides _how many_. Target group and health checks decide _which ones get traffic_ and, with ELB health checks on, _which get replaced_.
