@@ -369,3 +369,40 @@ After completing the lab, record the actual resource configuration and add scree
 ## How They Fit Together
 
 Launch template defines _what_ to launch. Scaling policy decides _how many_. Target group and health checks decide _which ones get traffic_ and, with ELB health checks on, _which get replaced_.
+
+---
+
+## Week 07 - Serverless & Event-Driven Architecture
+
+### Concepts
+
+- **Lambda:** Runs a function only when triggered and bills per invocation, so there is no server to patch or leave running. Each function runs under an execution role that defines what AWS resources it can touch.
+- **Cold start:** The first invocation after idle time has to start a new execution environment and run initialization code. Warm invocations skip that. Creating the DynamoDB client outside the handler means it is built once per environment and reused.
+- **API Gateway (HTTP API):** The public entry point. It maps a route like `GET /properties/{id}` to a Lambda and passes the request as an event, with `{id}` arriving as `event["pathParameters"]["id"]`.
+- **DynamoDB:** A key-value store accessed by partition key (`L_ListingID` here). Lookups by key are fast and need no server. On-demand billing means no capacity to manage.
+- **SQS:** A queue that decouples a sender from a receiver. A received message is not deleted, it is hidden for the visibility timeout and reappears unless the consumer deletes it.
+- **Dead-letter queue (DLQ):** After a message is received `maxReceiveCount` times without being deleted, SQS moves it to the DLQ so a bad message cannot retry forever and can be inspected later.
+- **SNS:** Pub/sub messaging where one published message fans out to many subscribers (email, SQS, Lambda). Covered conceptually this week, not used in a lab.
+- **Least privilege:** The Lambda role allows only `dynamodb:GetItem` on the `Properties` table. A bug or compromise in the function can't read other tables, write data, or touch other services.
+
+### Request path
+
+```mermaid
+flowchart LR
+    client["Client<br/>curl"] -->|"GET /properties/R100234"| apigw["API Gateway (HTTP API)<br/>route: GET /properties/{id}"]
+    apigw -->|"event.pathParameters.id"| fn["Lambda: get-property<br/>Python 3.12"]
+    fn -->|"GetItem(L_ListingID)"| ddb[("DynamoDB: Properties")]
+    ddb -->|"item"| fn
+    fn -->|"200 + JSON, or 404"| apigw
+    apigw -->|"HTTP response"| client
+    role["IAM execution role<br/>GetItem on Properties only"] -.->|"assumed by"| fn
+    fn -.->|"logs"| cw["CloudWatch Logs"]
+```
+
+### SQS dead-letter flow
+
+```mermaid
+flowchart LR
+    prod["Producer<br/>aws sqs send-message"] --> q["property-queue<br/>maxReceiveCount = 3"]
+    q -->|"received 3 times, never deleted"| dlq["property-dlq"]
+```
