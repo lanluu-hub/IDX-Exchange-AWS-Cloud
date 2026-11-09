@@ -1,0 +1,4 @@
+{
+  "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:456421176448:property-dlq\",\"maxReceiveCount\":\"3\"}",
+  "VisibilityTimeout": "5"
+}
