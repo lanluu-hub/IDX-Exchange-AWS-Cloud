@@ -1,0 +1,4 @@
+L_ListingID,L_City,L_Keyword2,LM_Dec_3,LM_Int2_3,L_SystemPrice,L_Status
+R100234,Sacramento,3,2.0,1450,450000,Active
+R100235,Fresno,4,2.5,1900,395000,Active
+R100236,Sacramento,2,1.0,900,299000,Pending
