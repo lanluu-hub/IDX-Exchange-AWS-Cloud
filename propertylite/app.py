@@ -9,7 +9,7 @@ def load_properties():
 
 @app.route("/health")
 def health():
-    return jsonify(status="ok")
+    return jsonify(status="ok", version="1.1")
 
 @app.route("/properties")
 def list_properties():
