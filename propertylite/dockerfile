@@ -5,11 +5,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py rets_property_sample.csv .
 EXPOSE 8080
 CMD ["python3", "app.py"]
-cd propertylite
-aws ecr create-repository --repository-name property-api
-aws ecr get-login-password | docker login --username AWS --password-stdin 456421176448.
-dkr.ecr.us-east-1.amazonaws.com
-docker build -t property-api .
-docker tag property-api:latest 456421176448.dkr.ecr.us-east-1.amazonaws.com/propertyapi:
-latest
-docker push 456421176448.dkr.ecr.us-east-1.amazonaws.com/property-api:latest
